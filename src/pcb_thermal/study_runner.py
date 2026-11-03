@@ -137,7 +137,7 @@ def study(case_path, section='steady', schedules=None, time_budget_minutes=None,
         raise WorkflowError('The first-case allowance must be positive and at most 20 minutes')
     _, base, project, board, baseline = load(case_path)
     if base['analysis'] != 'steady': raise WorkflowError('Provide a steady study case')
-    if base['sources'].get('kind', 'balancing') != 'balancing':
+    if base['sources']['kind'] != 'balancing':
         raise WorkflowError('Schedule studies require balancing sources; use run or sweep for fixed watts')
     root = baseline.parent; root.mkdir(parents=True, exist_ok=True)
     inputs = root/'study-inputs'; inputs.mkdir(exist_ok=True)

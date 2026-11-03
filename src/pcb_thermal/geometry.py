@@ -72,7 +72,7 @@ def prepare(board,case,project=None):
         if c['flipped']:raise WorkflowError('Back-side heat-source bodies require a reflected package model; not supported by this package template')
         points={p['number']:p['position'] for p in c['pads']}
         a,b=np.array(points['1']),np.array(points['2']);angle=math.degrees(math.atan2(*(b-a)[::-1]))
-        x,y=c['position'];l,w,height=cfg.get('resistor_body_mm',[3.2,6.3,0.7]);tw=cfg.get('terminal_width_mm',0.8)
+        x,y=c['position'];l,w,height=cfg['resistor_body_mm'];tw=cfg['terminal_width_mm']
         def place(g):return clean(translate(rotate(g,angle,origin=(0,0)),x,y))
         body=place(box(-l/2,-w/2,l/2,w/2))
         if not region.covers(body):raise WorkflowError(f'Crop cuts heat source {ref}')
@@ -226,7 +226,7 @@ def mesh(board,case,power,out,project=None):
     stack=board['stackup'];solder_top=case['geometry'].get('solder_mm',0.1)
     levels,merged_plies=stack_levels(stack,case['mesh'].get('merge_identical_dielectric_plies',False))
     z=sorted(levels |
-             {solder_top,solder_top+case['geometry'].get('resistor_body_mm',[3.2,6.3,.7])[2]})
+             {solder_top,solder_top+case['geometry']['resistor_body_mm'][2]})
     z=sorted(set(z)|{v for p in geo['mechanicals'] for v in (p['z_bottom_mm'],p['z_top_mm'])})
     mechanical_masks=[inside(p['shape']) for p in geo['mechanicals']]
     masks={name:inside(g) for name,g in geo['pads'].items()}

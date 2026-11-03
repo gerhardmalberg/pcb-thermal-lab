@@ -3,10 +3,13 @@ import copy
 import math
 from pathlib import Path
 from .common import WorkflowError, read_config, positive
+from .power import validate_sources
 
 def number(value, name, minimum=0, strict=True):
     if isinstance(value, bool): raise WorkflowError(f'{name} must be numeric')
-    x = float(value)
+    try: x = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise WorkflowError(f'{name} must be numeric') from exc
     if not math.isfinite(x) or (x <= minimum if strict else x < minimum):
         raise WorkflowError(f'{name} must be finite and {">" if strict else ">="} {minimum}')
     return x
@@ -45,6 +48,16 @@ def load(path, overrides=None):
         if not all(math.isfinite(x) for x in (x0,y0,x1,y1)) or x1<=x0 or y1<=y0:
             raise WorkflowError('crop_mm needs finite, increasing bounds')
     for k in ('detail_margin_mm','tile_mm'): number(g[k],k)
+    dimensions=g.get('resistor_body_mm')
+    if not isinstance(dimensions,list) or len(dimensions)!=3:
+        raise WorkflowError('geometry.resistor_body_mm requires explicit [length, width, height] in mm')
+    g['resistor_body_mm']=[number(value,'geometry.resistor_body_mm') for value in dimensions]
+    if 'terminal_width_mm' not in g:
+        raise WorkflowError('geometry.terminal_width_mm must be explicit')
+    terminal=number(g['terminal_width_mm'],'geometry.terminal_width_mm')
+    g['terminal_width_mm']=terminal
+    if 2*terminal>=float(dimensions[0]):
+        raise WorkflowError('Two terminal widths must be smaller than the resistor body length')
     mesh=case.setdefault('mesh',{}); mesh.setdefault('fine_mm',0.5);mesh.setdefault('coarse_mm',3.0)
     mesh.setdefault('scale',1.0);mesh.setdefault('chord_mm',0.01)
     for k in ('fine_mm','coarse_mm','scale','chord_mm'): number(mesh[k],k)
@@ -67,19 +80,14 @@ def load(path, overrides=None):
         if len(points)!=2 or any(len(p)!=3 for p in points) or not all(math.isfinite(float(v)) for p in points for v in p):
             raise WorkflowError('outputs.line_mm needs two finite [x,y,z] endpoints in thermal coordinates')
     if 'line_divisions' in outputs:outputs['line_divisions']=positive(outputs['line_divisions'])
-    refs=sources.get('refs',[])
-    if not refs or len(set(refs))!=len(refs): raise WorkflowError('sources.refs must be a nonempty unique list')
-    if sources.get('kind','balancing') not in ('balancing','watts'):raise WorkflowError('sources.kind must be balancing or watts')
-    if sources.get('kind','balancing')=='balancing':
-        if sources.get('schedule','automatic') not in ('automatic','odd','even'):raise WorkflowError('Only automatic, odd and even schedules are supported')
-        for k,v in [('cell_voltage_v',4.2),('resistance_ohm',20.0),('switch_resistance_ohm',1.45),('phase_s',5.0)]:
-            sources.setdefault(k,v);number(sources[k],k)
+    validate_sources(sources)
     if case['analysis']=='transient':
         t=case.setdefault('transient',{})
         for k,v in [('on_s',1800.0),('off_s',1800.0),('step_s',1.0),('field_interval_s',5.0)]:
             t.setdefault(k,v);number(t[k],k)
-        phase=sources.get('phase_s',5)
-        for interval in (phase,t['on_s'],t['off_s'],t['field_interval_s']):
+        intervals=[t['on_s'],t['off_s'],t['field_interval_s']]
+        if sources['kind']=='balancing':intervals.append(float(sources['phase_s']))
+        for interval in intervals:
             if abs(interval/t['step_s']-round(interval/t['step_s']))>1e-8:
                 raise WorkflowError('Timestep must divide phase, on/off durations and field interval')
     return path,case,project,board,output

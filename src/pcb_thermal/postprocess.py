@@ -28,7 +28,7 @@ def report(out,case):
         if power.get('schedule')=='automatic':
             odd=sum(p['odd_w'] for p in power['resistors'].values())
             even=sum(p['even_w'] for p in power['resistors'].values())
-            odd_phase=(np.floor((times-1e-8)/power.get('phase_s',5)).astype(int)%2)==0
+            odd_phase=(np.floor((times-1e-8)/power['phase_s']).astype(int)%2)==0
             input_power=np.where(odd_phase,odd,even)
         input_power[times>case['transient']['on_s']]=0.
     residual=input_power-removed

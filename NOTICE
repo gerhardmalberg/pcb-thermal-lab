@@ -5,10 +5,10 @@ Original software, recipes, configuration and documentation are Apache-2.0.
 KiCad extraction and runtime patterns are adapted from PCB EM Lab,
 Copyright 2026 Gerhard Malberg, Apache-2.0.
 
-Third-party applications and sources retain their licenses. The separate BMS
-hardware repository, its designs, models and physical case inputs retain
-CERN-OHL-P-2.0. This license does not relicense Elmer, Gmsh, KiCad or other
-software installed by these recipes. Sources and identities are in env/.
+Third-party applications and sources retain their licenses. Input designs,
+models and physical case inputs retain their own licenses. This license does not
+relicense Elmer, Gmsh, KiCad or other software installed by these recipes. Sources
+and identities are in env/.
 
 The AMGX configuration follows NVIDIA AMGX's FGMRES_CLASSICAL_AGGRESSIVE_HMIS
 example. Upstream source and licenses are retained inside the CUDA image.

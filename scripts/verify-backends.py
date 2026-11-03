@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the BMS CPU and CUDA solutions on the identical corrected mesh."""
+"""Compare CPU and CUDA steady solutions for an explicit case on the same mesh."""
 import argparse
 import copy
 import json
@@ -13,7 +13,7 @@ from pcb_thermal.runtime import Runtime
 
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('case',type=Path);a=p.parse_args()
 source,base,project,board,cpu=load(a.case)
-if base['analysis']!='steady':raise WorkflowError('Provide the steady BMS baseline case')
+if base['analysis']!='steady':raise WorkflowError('Provide a steady baseline case')
 root=cpu.parent;inputs=root/'study-inputs';inputs.mkdir(exist_ok=True)
 for backend in ('cpu','cuda'):
     c=copy.deepcopy(base);out=cpu if backend=='cpu' else root/(cpu.name+'-cuda')

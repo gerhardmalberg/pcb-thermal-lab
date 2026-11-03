@@ -13,8 +13,10 @@ belongs in another directory. CLI execution options override case execution.
 |---|---|
 | `board`, `project_root`, `output` | Source ownership and generated files |
 | `sources.refs` | Unique populated resistor references; independent of modeled board extent |
-| `sources.kind` | `balancing` derives CB0–CB16 powers; `watts` uses the explicit `watts` mapping |
-| `sources.schedule` | `automatic`, `odd` or `even`; adjacent manual channels are outside this study |
+| `sources.kind` | Required: `balancing` uses a configured resistor chain; `watts` uses explicit per-reference powers |
+| `sources.nodes` | Ordered balancing nodes declaring `ref`, `balance_net`, `tap_net`, `expected_value` |
+| `sources.schedule` | `automatic` (default), `odd` or `even`; alternate nonadjacent chain channels |
+| `geometry.resistor_body_mm`, `terminal_width_mm` | Required package dimensions `[length, width, height]` and width of each end terminal, in mm |
 | `geometry.mode` | `hybrid`, `explicit` or `crop` |
 | `geometry.detail_margin_mm` | Default 10 mm around resistor package footprints |
 | `geometry.tile_mm` | Default 5 mm spatial averaging outside the detailed region |
@@ -27,13 +29,72 @@ belongs in another directory. CLI execution options override case execution.
 | `transient` | On/off durations, timestep and field-output interval in seconds |
 | `execution` | Backend, MPI ranks, threads per rank and GPU count |
 
-The initial material constants are explicitly assumed: copper k=400, FR4
-k=[0.8,0.8,0.3], soldermask k=0.2, resistor ceramic k=25, effective terminals
-k=67 and solder k=50 W/mK. Their densities and heat capacities are stored in
+Material conductivities, densities and heat capacities are explicit inputs in
 the physical case, included in provenance and used for transient energy checks.
 They are not manufacturer-certified thermal models. Resistor power is uniformly
 distributed through the modeled ceramic body, so its maximum is a body-model
 temperature rather than a validated resistive-film temperature.
+
+## Explicit heat sources
+
+For constant loads use `"kind": "watts"`, a nonempty unique `refs` list and a
+`watts` mapping containing every selected reference. Powers must be finite and
+nonnegative with a positive total. Component references must exist and be populated.
+The [layered-via example](../examples/layered-via/case.json) supplies this format.
+
+For balancing, list the chain nodes in electrical order, from one end of the
+cell stack to the other. Channel 1 connects nodes 0 and 1; channel 2 connects
+nodes 1 and 2, and so on. The order of `refs` and the ordering of a footprint's
+pads do not determine channel order. For example, a two-channel chain uses:
+
+```json
+{
+  "sources": {
+    "kind": "balancing",
+    "refs": ["R1", "R2", "R3"],
+    "nodes": [
+      {"ref": "R1", "balance_net": "SW0", "tap_net": "TAP0", "expected_value": "10R"},
+      {"ref": "R2", "balance_net": "SW1", "tap_net": "TAP1", "expected_value": "10R"},
+      {"ref": "R3", "balance_net": "SW2", "tap_net": "TAP2", "expected_value": "10R"}
+    ],
+    "cell_voltage_v": 3.0,
+    "resistance_ohm": 10.0,
+    "switch_resistance_ohm": 0.5,
+    "phase_s": 2.0,
+    "schedule": "automatic"
+  }
+}
+```
+
+At least two nodes are required, and their references must cover `refs` exactly
+once. All balance and tap net names must be unique and disjoint. Each selected
+resistor must have exactly the two declared pad nets and a value string matching
+`expected_value`. This is a literal saved-value assertion; electrical resistance
+comes from `resistance_ohm`, not parsing the value string. Ensure these declarations
+agree with the circuit and record their provenance in the case assumptions.
+
+All four numerical parameters above must be supplied explicitly. Cell voltage,
+resistance and phase duration must be finite and positive; switch resistance
+may be zero for an ideal switch. The model assumes identical cells and equal
+resistors. One active channel carries `V / (2R + Rswitch)`, and each resistor
+in its path dissipates `I²R`. Only those external resistor losses heat the FEM;
+switch losses are reported separately.
+
+`odd` and `even` hold their respective channel sets active. `automatic` alternates
+them every `phase_s` in a transient and applies their equal-time average in a
+steady solve. With an odd number of channels, the phases have different total
+loads; both resistor and switch-loss accounting use the actual active count.
+A single-channel chain has an unpowered even phase.
+
+Earlier schema-1 balancing cases must add this explicit topology and electrical
+parameters. Every source kind now requires `kind`, `geometry.resistor_body_mm`
+and `geometry.terminal_width_mm`. All package dimensions must be positive, with
+two terminal widths smaller than the body length. Existing resolved results and
+provenance are historical records: leave them unchanged and choose a fresh output
+parent when migrating a case. The study runner deliberately rejects mixing
+historical and new source configurations.
+
+## Geometry and heat accounting
 
 The hybrid approximation mixes local copper fractions in parallel in-plane,
 combines layer resistance in series through thickness and includes plated-via
@@ -76,11 +137,11 @@ Otherwise a resistor entirely on one rank can incorrectly report a 0 K minimum.
 The full patched upstream source, its license header and source hashes are
 retained under `solve/native/`; all other native scalar behavior is preserved.
 
-Transient timesteps must divide the phase duration, on/off durations and field
-interval. The load uses the phase immediately before each step endpoint, so
-the first 1,800 seconds include exactly 1,800 seconds of balancing. No cell
-depletion, diagnostic pauses, thermal shutdown feedback or other heat sources
-are included in this operating assumption.
+Transient timesteps must divide the on/off durations and field interval, and
+for balancing sources also the configured phase duration. The load uses the
+phase immediately before each step endpoint, so the heat input lasts exactly
+`transient.on_s`. Fixed-watt sources have no implicit phase-duration constraint.
+Cell depletion, diagnostic pauses and thermal shutdown feedback are not modeled.
 
 For local debugging only, `PCB_THERMAL_ENGINE=native` uses installed host tools
 and the Elmer build under `.cache/native/elmer`. Native versions are identified
@@ -89,7 +150,7 @@ container images and exported inventories.
 
 ## Mechanical STEP contacts
 
-Separate mechanical inputs are optional and are absent from the BMS study.
+Separate mechanical inputs are optional.
 The current conformal mesher supports a single straight-sided vertical prism
 per STEP, with translation and rotation around Z. Its flat contact footprint
 must fit entirely on uninterrupted top soldermask, outside resistor bodies and
@@ -126,8 +187,9 @@ capacity values before using this example.
 
 A `perfect` contact has no additional layer. A `layer` contact models finite
 thermal resistance and heat capacity through its actual thickness and material,
-with shared interface nodes. For the BMS stack, top soldermask is z=0.035 mm;
-the example placement assumes the mechanical STEP starts at its own z=0.
+with shared interface nodes. The example assumes top soldermask at z=0.035 mm
+and a STEP starting at its own z=0. Use the extracted stack heights to choose
+the placement for your board; these example coordinates are not defaults.
 Original KiCad STEP and mechanical inputs remain separate. Canonical exports
 `pcb-thermal-coordinates.step`, `copper-thermal-coordinates.step` and
 `resistors-thermal-coordinates.step` use saved KiCad XY and front-copper z=0.
@@ -188,22 +250,44 @@ and numerical-worker containers with no extra container swap; the process
 monitor also retains 1.5 GiB of host available RAM and 2 GiB of disk space.
 A pressure stop is a failed stage with retained logs, not a valid thermal result.
 Only one pipeline runs per lab checkout. Schedule large native diagnostics and
-GUI reopening separately on small-memory machines. The documented BMS baseline
-used 7.19 GB peak solver RSS; refined domains may need more RAM.
+GUI reopening separately on small-memory machines. Refined domains may need
+more memory; inspect each run's resource measurements.
 
 ## JSON migration verification, 2026-11-01
 
-The layered-via example and board-specific case definitions were renamed to
-`.json` without changing their bytes or physical values. Generated sweep and
+The layered-via example case definition was renamed to
+`.json` without changing its bytes or physical values. Generated sweep and
 study inputs also use JSON. Case parsing rejects YAML syntax and works without
 site packages; all 33 unit tests pass. The standalone CPU example completes
 extraction, meshing, conversion, solving, reporting and headless rendering.
 The CUDA comparison on the same mesh has a maximum nodal temperature difference
-of 1.46e-6 °C, below the 0.1 °C backend-agreement criterion. This does not extend
-BMS physical-model validation or reopen its closed simulation scope.
+of 1.46e-6 °C, below the 0.1 °C backend-agreement criterion. Backend agreement
+on this fixture does not establish physical-model accuracy for other boards.
 
 The editable installation was refreshed offline using the existing environment.
 Installed container images were reused; a full source rebuild was not repeated.
 NVIDIA tooling accepts a temporary JSON device specification, and bootstrap
 scripts now request JSON. Existing host GPU configuration, historical result
 records and downloaded third-party source caches were left unchanged.
+
+## Explicit-source verification, 2026-11-03
+
+All 45 unit tests pass, including independent nodal-circuit comparisons for
+multiple chain lengths and electrical values, explicit topology validation,
+package dimensions, phase timing and fixed-watt loads. The tests and the
+layered-via CPU pipeline ran from an isolated copy containing only maintained
+source files, with no external hardware checkout or prior stage artifacts.
+
+The steady fixture completes extraction, meshing, conversion, solving and
+rendering. Its relative heat-balance error is 6.95e-11 for the 0.1 W load.
+The alternating-load transient regression compares standard MPI Elmer with
+cached MPI, serial and CHOLMOD paths; the largest absolute scalar difference
+is 1.59e-7, below the existing 1e-5 criterion. Fixed-watt standard/cached MPI
+runs also agree (8.16e-11 maximum difference) with a three-second timestep
+that does not divide five seconds. Each run passes the native heat accounting.
+
+The transient verifier creates its own output parent on a fresh checkout.
+Local logs and check records are under `results/validation/decoupling-2026-11-03/`.
+Existing images were reused; no source rebuild, new CUDA or GUI verification
+was performed. These checks establish tool behavior on the synthetic fixture,
+not physical accuracy for other boards.

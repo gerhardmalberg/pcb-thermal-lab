@@ -5,7 +5,7 @@ A hardware checkout can live anywhere. Supply its case path explicitly; paths
 inside the case resolve relative to that case, not the current working directory.
 
 ```bash
-pcb-thermal study /path/to/hardware/sim/thermal/CASE/config.json \
+pcb-thermal study /path/to/project/case.json \
   --section steady --schedules odd even --time-budget-minutes 120 --detail-check
 ```
 
@@ -13,7 +13,8 @@ This command selects odd/even steady heating at h = 10, 5, 50, 20 W/m²K, in tha
 order, with odd then even at each coefficient. Existing automatic results in the
 same output parent are verified and included without being rerun. Omit
 `--schedules` to select automatic, odd and even. The case must use balancing
-sources; fixed-power fixtures use `run` or `sweep` instead.
+sources with the explicit topology described in [case configuration](cases.md#explicit-heat-sources);
+fixed-power fixtures use `run` or `sweep` instead.
 
 ## Budget and interruption
 
@@ -76,12 +77,9 @@ cooled endpoint.
 ## Other study capabilities and resources
 
 The separate `mesh`, `detail`, `crop`, `transient` and `all` sections remain
-available for other explicitly requested studies. The BMS steady-only scope is
-closed; these capabilities are not outstanding BMS test requirements. They use
-the extended runner;
+available for additional studies. They use the extended runner;
 they do not accept the steady runner's schedule selection or time budget.
-They are not scheduled or started by the bounded command above. Full transient,
-GPU tuning and direct-solver experiments are outside the reduced steady deliverable.
+They are not scheduled or started by the bounded command above.
 
 One pipeline runs per checkout. The default worker/solver limit is 8 GiB,
 with a host reserve of 1.5 GiB and disk reserve of 2 GiB. Each numerical stage
@@ -121,3 +119,14 @@ python3 scripts/publish-steady.py /path/to/results/CASE /path/to/case-docs/repor
 It excludes incomplete solves, native meshes, fields, restart files and local
 absolute paths. A completed solve can still be a provisional prediction: the
 snapshot records failed or deferred domain validation separately from execution.
+
+## Compare backends for a steady case
+
+```bash
+python3 scripts/verify-backends.py /path/to/project/case.json
+```
+
+This runs CPU with two ranks and CUDA with one rank, then checks matching mesh
+coordinates and temperature fields. CUDA and its installed image are required.
+The CPU output uses the case's output directory; CUDA uses its sibling with a
+`-cuda` suffix. Choose fresh outputs when preserving a historical run.

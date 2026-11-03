@@ -59,7 +59,7 @@ def generate(case,power,meta,out,backend='cpu',ranks=1,mesh_directory='mesh',sur
         lines=[line.replace('Procedure = "HeatSolve" "HeatSolver"','Procedure = "ScheduledHeat" "ScheduledHeat"') for line in lines]
         lines[-1:-1]=['  Constant Bulk System = Logical True','  Linear System Refactorize = Logical False',
                        f'  Thermal On Seconds = Real {case["transient"]["on_s"]}',
-                       f'  Thermal Phase Seconds = Real {power.get("phase_s",5)}']
+                       f'  Thermal Phase Seconds = Real {power["phase_s"] if power.get("schedule")=="automatic" else case["transient"]["on_s"]}']
     if fast:lines=[x.replace('Active Solvers(5) = 1 2 3 4 5','Active Solvers(6) = 1 2 3 4 5 6') for x in lines]
     cadence=round(case['transient']['field_interval_s']/case['transient']['step_s']) if transient else 1
     lines+=['Solver 2','  Exec Solver = After Timestep',f'  Exec Interval = {cadence}','  Exec Intervals Offset(1) = -1',

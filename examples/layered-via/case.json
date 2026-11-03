@@ -111,6 +111,6 @@
     "max_iterations": 5000
   },
   "assumptions": [
-    "Synthetic validation board; 0.1 W resistor input; not a BMS study."
+    "Synthetic validation board with an explicit 0.1 W resistor input."
   ]
 }

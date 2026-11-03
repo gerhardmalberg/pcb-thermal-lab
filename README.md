@@ -7,10 +7,8 @@ The reusable tooling lives here; board-specific cases live with the hardware.
 Both scripts and GUI applications inspect the same exported geometry, mesh,
 solver input and result files.
 
-**The tooling and reduced CPU steady runs are implemented; full numerical
-validation remains open.** The limited BMS detail-region check failed local
-hotspot convergence, so its results remain provisional. The BMS simulation
-scope is closed at the steady study; further BMS simulations are not planned.
+The supplied layered-via fixture exercises the thermal pipeline independently.
+Each physical case still needs mesh/domain convergence and hardware correlation.
 A successful image build is not a validated thermal result.
 
 ## Quick start
@@ -65,7 +63,7 @@ flowchart TD
   C -.-> E[ElmerSolver: authoritative case.sif]
   K -->|STEP + saved copper, stackup, drills, placements| G
   F[FreeCAD: separate mechanical STEP] -.-> G
-  P[Selected resistor refs + verified CB connectivity] -->|per-resistor watts and schedule| E
+  P[Selected resistor refs + configured loads] -->|per-resistor watts and schedule| E
   G -->|board.msh + named physical groups| EG[ElmerGrid: tag-preserving conversion]
   EG -->|native mesh + optional MPI partition| E
   EG --> GUI[ElmerGUI: mesh and shared SIF]
@@ -85,11 +83,11 @@ from domain selection. Cropped models and fully explicit models use the same
 configuration interface. See [case configuration](docs/cases.md).
 
 The quick start uses the independent [layered-via fixture](examples/layered-via/README.md).
-For a board-specific balancing case, install this CLI once and supply the case's
+For a configured balancing chain, install this CLI once and supply the case's
 path from any directory:
 
 ```bash
-pcb-thermal study /path/to/hardware/sim/thermal/CASE/config.json \
+pcb-thermal study /path/to/project/case.json \
   --section steady --schedules odd even --time-budget-minutes 120
 ```
 
@@ -172,16 +170,14 @@ or results.
 ## License and sources
 
 Original software and documentation are [Apache-2.0](LICENSE), matching PCB EM
-Lab; see [NOTICE](NOTICE). Hardware designs, BMS cases and local component models
-retain their CERN-OHL-P-2.0 license. Installed third-party software retains its
-own license.
+Lab; see [NOTICE](NOTICE). Input designs, cases and component models retain their
+own licenses. Installed third-party software retains its own license.
 
 Thermal equations, solver keywords and output formats follow the
 [Elmer manuals](https://www.nic.funet.fi/pub/sci/physics/elmer/doc/).
-Balancing control and switch resistance follow the
-[TI BQ79616-Q1 datasheet](https://www.ti.com/lit/ds/symlink/bq79616-q1.pdf);
-resistor dimensions follow the
-[Vishay RCL e3 datasheet](https://www.vishay.com/docs/20046/rcle3.pdf).
+Circuit topology, electrical values and resistor dimensions are explicit case
+inputs. Record their sources and assumptions with the case; the lab does not
+select a device-specific electrical or package model.
 
 Historical results whose sources underwent an LF-only migration can be checked
 with `scripts/publish-steady.py RESULTS DESTINATION --source-normalization MANIFEST`.
