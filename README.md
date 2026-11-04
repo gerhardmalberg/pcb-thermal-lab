@@ -18,7 +18,7 @@ rootless Podman. CPU simulation does not require NVIDIA. Docker-compatible
 recipes are provided; select Docker with `PCB_THERMAL_ENGINE=docker`.
 
 ```bash
-git clone https://github.com/gerhardmalberg88/pcb-thermal-lab.git
+git clone https://github.com/gerhardmalberg/pcb-thermal-lab.git
 cd pcb-thermal-lab
 ./pcb-thermal bootstrap
 python3 -m venv --system-site-packages .venv
