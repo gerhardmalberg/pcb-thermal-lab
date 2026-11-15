@@ -1,5 +1,8 @@
 # Layered board and plated-via verification fixture
 
+Open `board.kicad_pro` in KiCad 10, then open its PCB. Local editor preferences
+and backups are ignored.
+
 This synthetic 20 × 15 mm two-layer PCB has one 0.1 W resistor, finite copper,
 soldermask, solder and a hollow plated through via. It is an Apache-2.0 lab
 fixture, independent of external hardware checkouts. It exercises the same production stages:

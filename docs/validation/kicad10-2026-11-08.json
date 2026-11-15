@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-08",
+  "example": "layered-via",
+  "unit_tests_passed": 46,
+  "kicad_version": "10.0.8",
+  "project_load_passed": true,
+  "front_and_back_plots_inspected": true,
+  "silkscreen_overlaps": 0,
+  "geometry": {
+    "extracted_physics_preserved_to_mm": 1e-06,
+    "before_sha256": "3f8fe1bd474de165a3a698cdad19ab9b150d18ad0df766622a395b1f49bd3f31",
+    "after_sha256": "e3c7f42d124a3ded11038c48ccd2fd8de7e9a371ce52aa87db403cc452647ff7"
+  },
+  "remaining_drc_types": [
+    "solder_mask_bridge",
+    "track_dangling"
+  ],
+  "runs": [
+    {
+      "name": "thermal-backends",
+      "command": [
+        "/usr/bin/python3",
+        "scripts/verify-backends.py",
+        "examples/layered-via/case.json"
+      ],
+      "elapsed_s": 47.60782304301392,
+      "returncode": 0
+    },
+    {
+      "name": "thermal-transient",
+      "command": [
+        "/usr/bin/python3",
+        "tests/verify_transient.py"
+      ],
+      "elapsed_s": 55.20112912298646,
+      "returncode": 0
+    }
+  ],
+  "backends": {
+    "criterion": "Maximum nodal temperature difference <0.1 C",
+    "identical_mesh_files": {
+      "mesh.boundary": true,
+      "mesh.elements": true,
+      "mesh.nodes": true
+    },
+    "maximum_temperature_difference_c": 8.639182738079398e-07,
+    "pass": true,
+    "rms_temperature_difference_c": 6.131297206996191e-07,
+    "shared_node_disagreement_c": [
+      0.0,
+      0.0
+    ],
+    "unique_nodes": 3638,
+    "worst_node_m": [
+      0.147261719251,
+      0.10475,
+      -0.0016
+    ]
+  },
+  "transient": {
+    "cached-cholmod": {
+      "max_absolute_scalar_difference": 8.272849072454846e-08,
+      "pass": true
+    },
+    "cached-mpi": {
+      "max_absolute_scalar_difference": 1.9167600839864463e-10,
+      "pass": true
+    },
+    "cached-serial": {
+      "max_absolute_scalar_difference": 1.640555069570837e-07,
+      "pass": true
+    },
+    "fixed-cached-mpi": {
+      "max_absolute_scalar_difference": 1.0373923942097463e-10,
+      "pass": true
+    },
+    "standard-mpi": {
+      "max_absolute_scalar_difference": 0.0,
+      "pass": true
+    }
+  },
+  "steady_run_timings": {
+    "cpu": {
+      "elapsed_s": 22.86851716041565,
+      "backend": "cpu",
+      "mpi_ranks": 2,
+      "solver_image": "5281b0b1c4a2d68a53009d92295883e451b7acf3d5d3bdceb0b6def62a727460",
+      "source_preserved": true
+    },
+    "cuda": {
+      "elapsed_s": 22.798489093780518,
+      "backend": "cuda",
+      "mpi_ranks": 1,
+      "solver_image": "4552019616ef94b316053cdf0a4c8ff38bc0c12734e603619c9864ffce76dea1",
+      "source_preserved": true
+    }
+  },
+  "cache_reuse": [
+    {
+      "name": "thermal-cpu",
+      "native_outputs_unchanged": true,
+      "files": 48
+    },
+    {
+      "name": "thermal-cuda",
+      "native_outputs_unchanged": true,
+      "files": 34
+    }
+  ]
+}

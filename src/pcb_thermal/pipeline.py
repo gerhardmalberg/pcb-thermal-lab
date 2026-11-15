@@ -35,6 +35,24 @@ def copytree(source,dest):
         except OSError:shutil.copy2(a,b)
     shutil.copytree(source,dest,copy_function=link,ignore=shutil.ignore_patterns('stage.json','stage.log','partitioning.*'))
 
+def source_inputs(case,project,board):
+    """Hash design inputs and referenced assets, excluding local editor state."""
+    extensions={'.kicad_pcb','.kicad_pro','.kicad_sch','.kicad_mod','.kicad_sym','.kicad_wks'}
+    files={p for p in board.parent.glob('*.kicad_*') if p.is_file() and p.suffix in extensions and not p.name.startswith(('_autosave-', '~', '.'))}
+    files.add(board)
+    source={str(p.relative_to(project)):digest(p) for p in sorted(files)}
+    # Model paths are resolved again during extraction; hash all local referenced assets.
+    import re
+    for name in re.findall(r'\(model\s+"([^"]+)"',board.read_text()):
+        p=Path(name.replace('${KIPRJMOD}',str(board.parent)))
+        if not p.is_absolute():p=board.parent/p
+        if p.is_file() and p.resolve().is_relative_to(project):source[str(p.resolve().relative_to(project))]=digest(p)
+    for item in case.get('mechanicals',[]):
+        p=(project/item['step']).resolve()
+        if not p.is_relative_to(project) or not p.is_file():raise WorkflowError('Mechanical STEP must exist inside project_root')
+        source[str(p.relative_to(project))]=digest(p)
+    return source
+
 @serial_workflow
 def run(path,stage='all',force=False,backend=None,mpi_ranks=None,threads_per_rank=None,gpu_count=None,sif=None,runtime=None):
     # Capture an explicitly edited SIF before replacing any owned output stage.
@@ -51,17 +69,7 @@ def run(path,stage='all',force=False,backend=None,mpi_ranks=None,threads_per_ran
     if not owned.exists():
         if any((out/s).exists() for s in STAGES):raise WorkflowError('Output has unowned stage directories; choose a new output')
         owned.write_text('PCB Thermal Lab generated output\n')
-    source={str(p.relative_to(project)):digest(p) for p in board.parent.glob('*.kicad_*') if p.is_file()}
-    # Model paths are resolved again during extraction; hash all local referenced assets.
-    import re
-    for name in re.findall(r'\(model\s+"([^"]+)"',board.read_text()):
-        p=Path(name.replace('${KIPRJMOD}',str(board.parent)))
-        if not p.is_absolute():p=board.parent/p
-        if p.is_file() and p.resolve().is_relative_to(project):source[str(p.resolve().relative_to(project))]=digest(p)
-    for item in case.get('mechanicals',[]):
-        p=(project/item['step']).resolve()
-        if not p.is_relative_to(project) or not p.is_file():raise WorkflowError('Mechanical STEP must exist inside project_root')
-        source[str(p.relative_to(project))]=digest(p)
+    source=source_inputs(case,project,board)
     implementation={str(p.relative_to(ROOT)):digest(p) for d in ('src','scripts') for p in (ROOT/d).rglob('*') if p.is_file() and p.suffix in ('.py','.F90','.sh')}
     tool_id=rt.image_id('tools');provenance={'status':'running','started_unix':time.time(),'source':source,'case':case,'implementation':implementation,'tools':tool_id,'engine':rt.engine}
     write_json(out/'case.resolved.json',case);write_json(out/'provenance.json',provenance)

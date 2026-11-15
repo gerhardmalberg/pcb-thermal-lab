@@ -8,6 +8,7 @@ Both scripts and GUI applications inspect the same exported geometry, mesh,
 solver input and result files.
 
 The supplied layered-via fixture exercises the thermal pipeline independently.
+See the [KiCad 10 CPU/CUDA validation](docs/validation.md) for the latest example checks.
 Each physical case still needs mesh/domain convergence and hardware correlation.
 A successful image build is not a validated thermal result.
 

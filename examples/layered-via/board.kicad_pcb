@@ -34,7 +34,7 @@
 		(45 "User.4" user)
 	)
 	(setup
-(stackup (layer "F.Mask" (type "Top Solder Mask") (thickness 0.02)) (layer "F.Cu" (type "copper") (thickness 0.035)) (layer "dielectric 1" (type "core") (thickness 1.53) (material "FR4")) (layer "B.Cu" (type "copper") (thickness 0.035)) (layer "B.Mask" (type "Bottom Solder Mask") (thickness 0.02)))
+		(stackup (layer "F.Mask" (type "Top Solder Mask") (thickness 0.02)) (layer "F.Cu" (type "copper") (thickness 0.035)) (layer "dielectric 1" (type "core") (thickness 1.53) (material "FR4")) (layer "B.Cu" (type "copper") (thickness 0.035)) (layer "B.Mask" (type "Bottom Solder Mask") (thickness 0.02)))
 		(pad_to_mask_clearance 0)
 		(allow_soldermask_bridges_in_footprints no)
 		(tenting
@@ -51,6 +51,8 @@
 		)
 		(capping no)
 		(filling no)
+		(aux_axis_origin 138.5 97.5)
+		(grid_origin 138.5 97.5)
 		(pcbplotparams
 			(layerselection 0x00000000_00000000_55555555_5755f5ff)
 			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
@@ -91,9 +93,9 @@
 	(footprint ""
 		(layer "F.Cu")
 		(uuid "7adfcece-c72c-41b1-b0e8-ae936b41b222")
-		(at 10 7.5)
+		(at 148.5 105)
 		(property "Reference" "R1"
-			(at 0 0 0)
+			(at 0 -5 0)
 			(layer "F.SilkS")
 			(uuid "723b891a-befc-4756-b904-7b9b553646f5")
 			(effects
@@ -105,6 +107,7 @@
 		(property "Value" "20R"
 			(at 0 0 0)
 			(layer "F.Fab")
+			(hide yes)
 			(uuid "397c93a3-171f-4ddd-97c5-e614a25f8cbd")
 			(effects
 				(font
@@ -138,22 +141,22 @@
 		(pad "1" smd rect
 			(at -1.3 0)
 			(size 1.5 6.5)
-			(layers "F.Cu" "F.Mask" "F.SilkS" "F.Adhes" "F.Paste" "F.CrtYd" "F.Fab")
+			(layers "F.Cu" "F.Mask" "F.Adhes" "F.Paste" "F.CrtYd" "F.Fab")
 			(thermal_bridge_angle 45)
 			(uuid "2488342e-132b-406a-b3b7-d6b924b2f167")
 		)
 		(pad "2" smd rect
 			(at 1.3 0)
 			(size 1.5 6.5)
-			(layers "F.Cu" "F.Mask" "F.SilkS" "F.Adhes" "F.Paste" "F.CrtYd" "F.Fab")
+			(layers "F.Cu" "F.Mask" "F.Adhes" "F.Paste" "F.CrtYd" "F.Fab")
 			(thermal_bridge_angle 45)
 			(uuid "6df4e566-4536-4c13-8eb1-5cb9b7ce9443")
 		)
 		(embedded_fonts no)
 	)
 	(gr_line
-		(start 0 0)
-		(end 20 0)
+		(start 138.5 97.5)
+		(end 158.5 97.5)
 		(stroke
 			(width 0.05)
 			(type default)
@@ -162,8 +165,8 @@
 		(uuid "64ff572e-afc4-4157-9f4d-20af94fce4a4")
 	)
 	(gr_line
-		(start 0 15)
-		(end 0 0)
+		(start 138.5 112.5)
+		(end 138.5 97.5)
 		(stroke
 			(width 0.05)
 			(type default)
@@ -172,8 +175,8 @@
 		(uuid "29b5439a-093c-471f-b62c-918b6d15aad8")
 	)
 	(gr_line
-		(start 20 0)
-		(end 20 15)
+		(start 158.5 97.5)
+		(end 158.5 112.5)
 		(stroke
 			(width 0.05)
 			(type default)
@@ -182,8 +185,8 @@
 		(uuid "f1b7d33e-ad5f-4e34-9d56-7a4839ecae0b")
 	)
 	(gr_line
-		(start 20 15)
-		(end 0 15)
+		(start 158.5 112.5)
+		(end 138.5 112.5)
 		(stroke
 			(width 0.05)
 			(type default)
@@ -192,15 +195,15 @@
 		(uuid "9feaa3c3-bda3-44a7-a59a-c836718a3b94")
 	)
 	(segment
-		(start 4 7.5)
-		(end 8.7 7.5)
+		(start 142.5 105)
+		(end 147.2 105)
 		(width 2)
 		(layer "F.Cu")
 		(net "")
 		(uuid "7c956605-693d-4692-b3df-15099d871f24")
 	)
 	(via
-		(at 4 7.5)
+		(at 142.5 105)
 		(size 1.5)
 		(drill 0.8)
 		(layers "F.Cu" "B.Cu")
@@ -208,8 +211,8 @@
 		(uuid "1625c4c7-a444-44ed-9593-f16b200dce9f")
 	)
 	(segment
-		(start 4 7.5)
-		(end 8.7 7.5)
+		(start 142.5 105)
+		(end 147.2 105)
 		(width 2)
 		(layer "B.Cu")
 		(net "")
